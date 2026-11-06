@@ -7,3 +7,6 @@ coverage
 apps/web/.vite
 *.pdf
 uploads
+
+# local deployment secrets
+deploy/dokploy.env

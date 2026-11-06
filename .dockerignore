@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/.vite
+.git
+.github
+.claude
+.env
+**/.env
+apps/api/uploads
+deploy/dokploy.env
+*.pdf
+docs
+PLAN.md
