@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, Injectable, NotFoundException }
 import { PartialType } from '@nestjs/mapped-types';
 import { AuditAction, Prisma, Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
-import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
+import { IsBoolean, IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { AuditService } from '../audit/audit.service';
 import { AuthUser } from '../common/current-user.decorator';
 import { PrismaService } from '../prisma/prisma.service';
@@ -13,7 +13,8 @@ export class CreateUserDto {
   @IsEnum(Role) role: Role;
   @IsOptional() @IsString() companyId?: string | null;
   @IsOptional() @IsBoolean() active?: boolean;
-  @IsString() @MinLength(8) password: string;
+  /** bcrypt only reads the first 72 bytes, so longer passwords would be silently truncated. */
+  @IsString() @MinLength(8) @MaxLength(64) password: string;
 }
 export class UpdateUserDto extends PartialType(CreateUserDto) {}
 

@@ -7,6 +7,7 @@ import { day, FREQUENCY_LABEL, periodText, STATUS_LABEL, type RequestDetail, typ
 import { ProgressBar } from '../components/RequestTable';
 import StatusBadge from '../components/StatusBadge';
 import Tabs from '../components/Tabs';
+import { isAcceptableNumber, NUMBER_RULE } from '../lib/number';
 
 type Draft = Record<string, { value: string; dataStatus: string; description: string; comment: string }>;
 
@@ -71,6 +72,11 @@ function Detail({
   };
 
   const filledCount = useMemo(() => Object.values(draft).filter((d) => d.value.trim() !== '').length, [draft]);
+  /** Values with a unit must be numbers; flag them before the server has to refuse them. */
+  const invalidIds = useMemo(
+    () => new Set(request.values.filter((v) => v.metric.unit && draft[v.metricId].value.trim() !== '' && !isAcceptableNumber(draft[v.metricId].value)).map((v) => v.metricId)),
+    [request.values, draft],
+  );
   const livePercent = request.values.length ? Math.floor((filledCount / request.values.length) * 100) : 0;
 
   const payload = () => ({
@@ -142,12 +148,14 @@ function Detail({
                           <td className="px-3 py-2">
                             <input
                               aria-label={`Value for ${r.metric.name}`}
+                              aria-invalid={invalidIds.has(r.metricId)}
                               inputMode={r.metric.unit ? 'decimal' : undefined}
                               value={d.value}
                               disabled={!canFill}
                               onChange={(e) => set(r.metricId, { value: e.target.value })}
-                              className={fieldClass}
+                              className={`${fieldClass} ${invalidIds.has(r.metricId) ? '!border-bad bg-[#fdf1ee]' : ''}`}
                             />
+                            {invalidIds.has(r.metricId) && <p className="mt-1 max-w-52 text-[11px] leading-snug text-bad">{NUMBER_RULE}</p>}
                           </td>
                           <td className="px-3 py-2">
                             <select
@@ -191,7 +199,7 @@ function Detail({
         </div>
         {canFill && (
           <div className="flex gap-2">
-            <button onClick={() => { setError(undefined); setNotice(undefined); save.mutate(); }} disabled={save.isPending || submit.isPending} className="rounded-lg border border-neutral-300 bg-card px-3.5 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50 disabled:opacity-60">
+            <button onClick={() => { setError(undefined); setNotice(undefined); save.mutate(); }} disabled={save.isPending || submit.isPending || invalidIds.size > 0} className="rounded-lg border border-neutral-300 bg-card px-3.5 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50 disabled:opacity-60">
               Save Draft
             </button>
             <button
@@ -202,7 +210,7 @@ function Detail({
                   submit.mutate();
                 }
               }}
-              disabled={save.isPending || submit.isPending}
+              disabled={save.isPending || submit.isPending || invalidIds.size > 0}
               className="rounded-md bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
             >
               Final Submit
@@ -211,6 +219,11 @@ function Detail({
         )}
       </div>
 
+      {invalidIds.size > 0 && canFill && (
+        <p role="status" className="rounded bg-[#fbf0d3] px-3 py-2 text-sm text-[#7a5a0c]">
+          {invalidIds.size} value{invalidIds.size > 1 ? 's need' : ' needs'} fixing before you can save. {NUMBER_RULE}
+        </p>
+      )}
       {error && <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">{error}</p>}
       {notice && <p role="status" className="rounded bg-forest-100 px-3 py-2 text-sm text-forest-800">{notice}</p>}
 

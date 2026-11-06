@@ -152,5 +152,6 @@ export function evaluateFormula(ast: Ast, values: Record<string, number>): numbe
   };
   const result = walk(ast);
   if (!Number.isFinite(result)) throw new FormulaError('Result is not a finite number');
-  return result;
+  // 15 significant digits is the most a double holds reliably; this removes noise such as 0.30000000000000004.
+  return Number(result.toPrecision(15));
 }

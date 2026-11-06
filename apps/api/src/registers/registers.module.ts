@@ -1,5 +1,6 @@
 import { Injectable, Module } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service';
+import { parseDay } from '../common/dates';
 import { createCrudController } from '../common/crud.controller';
 import { CrudConfig, CrudService } from '../common/crud.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -8,7 +9,7 @@ import * as dto from './dto';
 const COMPANY = { select: { id: true, code: true, name: true } };
 
 /** "2024-03-31" → Date, null stays null (clears the column), undefined stays untouched. */
-const asDate = (v: unknown) => (typeof v === 'string' && v ? new Date(`${v.slice(0, 10)}T00:00:00Z`) : v === null ? null : undefined);
+const asDate = (v: unknown) => (typeof v === 'string' && v ? (parseDay(v) ?? undefined) : v === null ? null : undefined);
 const withDates = <T extends Record<string, any>>(data: T, keys: string[]): T => {
   const out: Record<string, any> = { ...data };
   for (const k of keys) if (k in out) out[k] = asDate(out[k]);

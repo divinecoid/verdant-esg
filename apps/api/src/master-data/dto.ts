@@ -6,7 +6,6 @@ import {
   ArrayUnique,
   IsArray,
   IsBoolean,
-  IsDateString,
   IsEmail,
   IsEnum,
   IsInt,
@@ -18,6 +17,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { IsCalendarDate } from '../common/dates';
 import { CompanyType, EsgGroup, MetricAggregation } from '@prisma/client';
 
 const optionalString = () => (target: object, key: string) => {
@@ -50,8 +50,8 @@ export class CreateProjectDto {
   @optionalString() sector?: string;
   @Type(() => Number) @IsNumber() @Min(0) @Max(100) ownershipPct: number;
   @Type(() => Number) @IsNumber() @Min(0) investedCapital: number;
-  @IsOptional() @IsDateString() initialInvestedAt?: string | null;
-  @IsOptional() @IsDateString() closingDate?: string | null;
+  @IsOptional() @IsCalendarDate() initialInvestedAt?: string | null;
+  @IsOptional() @IsCalendarDate() closingDate?: string | null;
 }
 export class UpdateProjectDto extends PartialType(CreateProjectDto) {}
 

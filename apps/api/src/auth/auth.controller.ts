@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 import { Public } from '../common/public.decorator';
 import { AuthUser, CurrentUser } from '../common/current-user.decorator';
 import { AuthService } from './auth.service';
@@ -11,6 +11,7 @@ class LoginDto {
 
   @IsString()
   @MinLength(1)
+  @MaxLength(128)
   password: string;
 }
 

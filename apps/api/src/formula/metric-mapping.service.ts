@@ -37,7 +37,31 @@ export class MetricMappingService extends CrudService {
 
   async create(dto: { companyId: string; metricIds: string[]; active?: boolean }, user: AuthUser) {
     const active = dto.active ?? true;
-    const created = await this.prisma.$transaction(async (tx) => {
+    const created = await this.createWithRetry(dto, active);
+    await this.audit.record({
+      object: this.config.object,
+      objectId: created.id,
+      action: AuditAction.CREATE,
+      user,
+      after: this.summary(created),
+    });
+    return created;
+  }
+
+  /** Version numbers come from "latest + 1", so two simultaneous creators can collide on the unique key; try again. */
+  private async createWithRetry(dto: { companyId: string; metricIds: string[] }, active: boolean) {
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await this.createVersion(dto, active);
+      } catch (e) {
+        const collided = e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002';
+        if (!collided || attempt >= 4) throw e;
+      }
+    }
+  }
+
+  private createVersion(dto: { companyId: string; metricIds: string[] }, active: boolean) {
+    return this.prisma.$transaction(async (tx) => {
       const company = await tx.company.findUnique({ where: { id: dto.companyId }, select: { id: true } });
       if (!company) throw new BadRequestException('Company does not exist');
       const items = await this.itemsFor(tx, dto.metricIds);
@@ -48,14 +72,6 @@ export class MetricMappingService extends CrudService {
         include: this.config.include,
       });
     });
-    await this.audit.record({
-      object: this.config.object,
-      objectId: created.id,
-      action: AuditAction.CREATE,
-      user,
-      after: this.summary(created),
-    });
-    return created;
   }
 
   async update(id: string, dto: { active?: boolean; metricIds?: string[] }, user: AuthUser) {

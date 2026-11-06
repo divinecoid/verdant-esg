@@ -1,11 +1,13 @@
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AuditAction, Prisma, RequestStatus, RequestType, ReviewDecision, Role } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { AuthUser } from '../common/current-user.decorator';
+import { parseDay } from '../common/dates';
+import { NUMBER_HINT, normaliseNumber } from '../common/number';
 import { MailService } from '../mail/mail.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateDataRequestDto, ReviewDto, SaveValuesDto } from './dto';
-import { afterReview, afterSubmit, canEdit, progressOf, statusAfterSave, WorkflowError } from './workflow';
+import { afterReview, afterSubmit, canEdit, EDITABLE_STATUSES, progressOf, statusAfterSave, WorkflowError } from './workflow';
 
 const OBJECT = 'ESG Data Request';
 export const requestLabel = (number: number) => `DR-${String(number).padStart(6, '0')}`;
@@ -32,7 +34,8 @@ const DETAIL = {
 } satisfies Prisma.DataRequestInclude;
 
 const isFilled = (v: string | null) => v !== null && v.trim() !== '';
-const parseDate = (s: string) => new Date(`${s.slice(0, 10)}T00:00:00Z`);
+/** Validated by IsCalendarDate before it gets here. */
+const parseDate = (s: string) => parseDay(s)!;
 const clean = (v: string | null | undefined) => (v === undefined ? undefined : v === null || v.trim() === '' ? null : v.trim());
 
 export interface NewRequest {
@@ -93,8 +96,8 @@ export class DataRequestService {
     q: { page: number; pageSize: number; type?: string; companyId?: string; status?: string; reviewLevel?: string; search?: string },
   ) {
     const where: Prisma.DataRequestWhereInput = {};
-    if (q.type && q.type in RequestType) where.type = q.type as RequestType;
-    const statuses = (q.status ?? '').split(',').filter((s): s is RequestStatus => s in RequestStatus);
+    if (q.type && Object.hasOwn(RequestType, q.type)) where.type = q.type as RequestType;
+    const statuses = (q.status ?? '').split(',').filter((s): s is RequestStatus => Object.hasOwn(RequestStatus, s));
     if (statuses.length) where.status = { in: statuses };
     if (q.reviewLevel) where.reviewLevel = Number(q.reviewLevel) || 0;
     where.companyId = user.role === Role.INVESTEE ? (user.companyId ?? '__none__') : q.companyId || undefined;
@@ -133,6 +136,7 @@ export class DataRequestService {
   /** Used by the API and the scheduler. Snapshots the company's active metric selection into empty value rows. */
   async createRequest(input: NewRequest, by: { id?: string; name: string }) {
     if (input.periodEnd < input.periodStart) throw new BadRequestException('Period end must not be before period start');
+    if (input.dueDate < input.periodStart) throw new BadRequestException('The due date cannot be before the period starts');
     const mapping = await this.prisma.metricMapping.findFirst({
       where: { companyId: input.companyId, active: true },
       include: { items: { select: { metricId: true } } },
@@ -222,8 +226,8 @@ export class DataRequestService {
       if (seen.has(input.metricId)) throw new BadRequestException(`Metric ${row.metric.code} appears more than once`);
       seen.add(input.metricId);
       const value = clean(input.value);
-      if (value && row.metric.unit && !Number.isFinite(Number(value.replace(/,/g, '')))) {
-        throw new BadRequestException(`"${row.metric.name}" must be a number (unit ${row.metric.unit})`);
+      if (value && row.metric.unit && normaliseNumber(value) === null) {
+        throw new BadRequestException(`"${row.metric.name}" must be a number in ${row.metric.unit}. ${NUMBER_HINT}`);
       }
     }
 
@@ -231,11 +235,20 @@ export class DataRequestService {
     const after: Record<string, unknown> = {};
     const nextStatus = statusAfterSave(request.status);
 
-    await this.prisma.$transaction([
-      ...dto.values.map((input) => {
+    await this.prisma.$transaction(async (tx) => {
+      // Claim the request first: if it was submitted (or otherwise locked) a moment ago, nothing below is written.
+      const claimed = await tx.dataRequest.updateMany({
+        where: { id, status: { in: EDITABLE_STATUSES } },
+        data: { status: nextStatus, ...(dto.remarks !== undefined && { remarks: clean(dto.remarks) }) },
+      });
+      if (claimed.count !== 1) throw new ConflictException('This request was just submitted or changed by someone else. Reload and try again.');
+
+      for (const input of dto.values) {
         const row = byMetric.get(input.metricId)!;
+        const cleaned = clean(input.value);
         const next = {
-          value: clean(input.value)?.replace(/,/g, '') ?? (input.value === undefined ? undefined : null),
+          // Numbers are stored in canonical form ("1,234.5" → "1234.5"); text answers are kept exactly as typed.
+          value: cleaned && row.metric.unit ? normaliseNumber(cleaned) : (cleaned ?? (input.value === undefined ? undefined : null)),
           dataStatus: clean(input.dataStatus),
           description: clean(input.description),
           comment: clean(input.comment),
@@ -244,16 +257,9 @@ export class DataRequestService {
           before[row.metric.code] = row.value;
           after[row.metric.code] = next.value;
         }
-        return this.prisma.dataRequestValue.update({
-          where: { requestId_metricId: { requestId: id, metricId: input.metricId } },
-          data: next,
-        });
-      }),
-      this.prisma.dataRequest.update({
-        where: { id },
-        data: { status: nextStatus, ...(dto.remarks !== undefined && { remarks: clean(dto.remarks) }) },
-      }),
-    ]);
+        await tx.dataRequestValue.update({ where: { requestId_metricId: { requestId: id, metricId: input.metricId } }, data: next });
+      }
+    });
 
     if (nextStatus !== request.status) {
       before.status = request.status;
@@ -276,9 +282,15 @@ export class DataRequestService {
       if (e instanceof WorkflowError) throw new BadRequestException(e.message);
       throw e;
     }
-    await this.prisma.dataRequest.update({
-      where: { id },
-      data: { ...next, submittedAt: new Date(), submittedById: user.id },
+    await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.dataRequest.updateMany({
+        where: { id, status: request.status, reviewLevel: request.reviewLevel },
+        data: { ...next, submittedAt: new Date(), submittedById: user.id },
+      });
+      if (claimed.count !== 1) throw new ConflictException('This request was already submitted or changed by someone else. Reload and try again.');
+      // Re-check completeness inside the transaction so a save that landed a moment ago cannot slip an empty value through.
+      const stillEmpty = await tx.dataRequestValue.count({ where: { requestId: id, OR: [{ value: null }, { value: '' }] } });
+      if (stillEmpty) throw new BadRequestException(`${stillEmpty} of ${request.values.length} metrics still have no value`);
     });
     await this.audit.record({
       object: OBJECT,
@@ -305,17 +317,27 @@ export class DataRequestService {
     });
     if (!request) throw new NotFoundException();
 
-    const levelOneApprover = request.approvals.find((a) => a.level === 1 && a.decision === ReviewDecision.APPROVED);
+    // Everyone who approved level 1 since the latest submission is barred from level 2 (not just the most recent one).
+    const cycleStart = request.submittedAt?.getTime() ?? 0;
+    const levelOneApprovers = request.approvals
+      .filter((a) => a.level === 1 && a.decision === ReviewDecision.APPROVED && a.createdAt.getTime() >= cycleStart)
+      .map((a) => a.reviewerId);
     let next;
     try {
-      next = afterReview(request, dto.decision, user.id, levelOneApprover?.reviewerId);
+      next = afterReview(request, dto.decision, user.id, levelOneApprovers);
     } catch (e) {
       if (e instanceof WorkflowError) throw new BadRequestException(e.message);
       throw e;
     }
 
-    await this.prisma.$transaction([
-      this.prisma.reviewApproval.create({
+    await this.prisma.$transaction(async (tx) => {
+      // Two reviewers acting at the same moment: only the first one finds the request still at this step.
+      const claimed = await tx.dataRequest.updateMany({
+        where: { id, status: request.status, reviewLevel: request.reviewLevel },
+        data: next,
+      });
+      if (claimed.count !== 1) throw new ConflictException('Someone else has just reviewed this request. Reload to see its current state.');
+      await tx.reviewApproval.create({
         data: {
           requestId: id,
           level: request.reviewLevel,
@@ -324,9 +346,8 @@ export class DataRequestService {
           reviewerId: user.id,
           reviewerName: user.name,
         },
-      }),
-      this.prisma.dataRequest.update({ where: { id }, data: next }),
-    ]);
+      });
+    });
     await this.audit.record({
       object: OBJECT,
       objectId: id,

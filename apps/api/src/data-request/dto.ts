@@ -3,7 +3,6 @@ import {
   ArrayMaxSize,
   IsArray,
   IsBoolean,
-  IsDateString,
   IsEnum,
   IsInt,
   IsNotEmpty,
@@ -15,6 +14,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { IsCalendarDate } from '../common/dates';
 import { Frequency, RequestType, ReviewDecision } from '@prisma/client';
 import { PartialType } from '@nestjs/mapped-types';
 
@@ -22,9 +22,9 @@ export class CreateDataRequestDto {
   @IsString() @IsNotEmpty() companyId: string;
   @IsEnum(RequestType) type: RequestType;
   @ValidateIf((o) => o.type === RequestType.PERIODIC) @IsEnum(Frequency) frequency?: Frequency;
-  @IsDateString() periodStart: string;
-  @IsDateString() periodEnd: string;
-  @IsDateString() dueDate: string;
+  @IsCalendarDate() periodStart: string;
+  @IsCalendarDate() periodEnd: string;
+  @IsCalendarDate() dueDate: string;
   @ValidateIf((o) => o.type === RequestType.AD_HOC) @IsString() @IsNotEmpty() @MaxLength(2000) notes?: string;
 }
 

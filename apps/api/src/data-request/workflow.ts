@@ -11,6 +11,9 @@ const EDITABLE: ReadonlySet<RequestStatus> = new Set([
 
 export const canEdit = (status: RequestStatus) => EDITABLE.has(status);
 
+/** For database filters: the statuses in which the company may still change the data. */
+export const EDITABLE_STATUSES: RequestStatus[] = [...EDITABLE];
+
 /** Saving a draft starts a request; a revision stays "need revision" until it is submitted again. */
 export const statusAfterSave = (status: RequestStatus): RequestStatus =>
   status === RequestStatus.NOT_STARTED ? RequestStatus.ON_GOING : status;
@@ -32,20 +35,20 @@ export function afterSubmit(status: RequestStatus): ReviewState {
 /**
  * Two-step review: level 1 approval moves to level 2, level 2 approval completes the request, and
  * "need revision" at either level sends it back to the company. The level-2 reviewer must be a different
- * person than whoever approved level 1.
+ * person than anyone who approved level 1 in this review cycle.
  */
 export function afterReview(
   state: ReviewState,
   decision: ReviewDecision,
   reviewerId: string,
-  levelOneApproverId?: string,
+  levelOneApproverIds: string[] = [],
 ): ReviewState {
   if (state.status !== RequestStatus.SUBMITTED || state.reviewLevel < 1) {
     throw new WorkflowError('This request is not waiting for review');
   }
   if (decision === ReviewDecision.NEED_REVISION) return { status: RequestStatus.NEED_REVISION, reviewLevel: 0 };
   if (state.reviewLevel >= REVIEW_LEVELS) {
-    if (levelOneApproverId && levelOneApproverId === reviewerId) {
+    if (levelOneApproverIds.includes(reviewerId)) {
       throw new WorkflowError('The second review must be done by a different reviewer than the first');
     }
     return { status: RequestStatus.APPROVED, reviewLevel: 0 };

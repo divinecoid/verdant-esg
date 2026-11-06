@@ -1,5 +1,6 @@
 import { BadRequestException, Controller, Get, Injectable, Module, NotFoundException, Query } from '@nestjs/common';
 import { FindingStatus, IncidentStatus, RequestStatus, RiskStatus, Role, Severity } from '@prisma/client';
+import { parseNumber } from '../common/number';
 import { Roles } from '../common/roles.decorator';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -15,11 +16,7 @@ import {
   type Observation,
 } from './performance';
 
-const toNumber = (v: string | null | undefined) => {
-  if (v === null || v === undefined || v.trim() === '') return null;
-  const n = Number(v.replace(/,/g, ''));
-  return Number.isFinite(n) ? n : null;
-};
+const toNumber = parseNumber;
 
 @Injectable()
 export class PerformanceService {

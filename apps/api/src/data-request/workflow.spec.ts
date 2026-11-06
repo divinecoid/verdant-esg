@@ -30,18 +30,25 @@ describe('request workflow', () => {
   it('walks level 1 → level 2 → approved', () => {
     const l1 = afterReview({ status: S.SUBMITTED, reviewLevel: 1 }, D.APPROVED, 'alice');
     expect(l1).toEqual({ status: S.SUBMITTED, reviewLevel: 2 });
-    expect(afterReview(l1, D.APPROVED, 'bob', 'alice')).toEqual({ status: S.APPROVED, reviewLevel: 0 });
+    expect(afterReview(l1, D.APPROVED, 'bob', ['alice'])).toEqual({ status: S.APPROVED, reviewLevel: 0 });
   });
 
   it('requires a different person for the second review', () => {
-    expect(() => afterReview({ status: S.SUBMITTED, reviewLevel: 2 }, D.APPROVED, 'alice', 'alice')).toThrow(
+    expect(() => afterReview({ status: S.SUBMITTED, reviewLevel: 2 }, D.APPROVED, 'alice', ['alice'])).toThrow(
       'different reviewer',
     );
   });
 
+  it('bars every level-1 approver from level 2, not only the most recent one', () => {
+    const state = { status: S.SUBMITTED, reviewLevel: 2 };
+    expect(() => afterReview(state, D.APPROVED, 'alice', ['alice', 'bob'])).toThrow('different reviewer');
+    expect(() => afterReview(state, D.APPROVED, 'bob', ['alice', 'bob'])).toThrow('different reviewer');
+    expect(afterReview(state, D.APPROVED, 'carol', ['alice', 'bob'])).toEqual({ status: S.APPROVED, reviewLevel: 0 });
+  });
+
   it('lets either level send the request back', () => {
     for (const reviewLevel of [1, 2]) {
-      expect(afterReview({ status: S.SUBMITTED, reviewLevel }, D.NEED_REVISION, 'alice', 'alice')).toEqual({
+      expect(afterReview({ status: S.SUBMITTED, reviewLevel }, D.NEED_REVISION, 'alice', ['alice'])).toEqual({
         status: S.NEED_REVISION,
         reviewLevel: 0,
       });

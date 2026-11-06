@@ -44,6 +44,13 @@ Tick each line as a person in the stated role performs it. Use a staging databas
 - [ ] Risk & Compliance: add an incident, an overdue audit finding, a risk scored 16 and a non-compliant item; the dashboard indicators and risk matrix change accordingly.
 - [ ] ⌘K / Ctrl+K opens the command palette; typing "safety" finds Risk & Compliance. The sidebar and every page remain usable on a phone-width screen.
 
+## Input rules
+- [ ] In a data request, type `12,5` in a numeric field: the field turns red, a banner explains the rule, Save Draft and Final Submit are disabled. Change it to `12.5` and they unlock. `1,234.5` saves as 1234.5.
+- [ ] A yes/no or text metric keeps commas in what you type (e.g. "Approved, effective 1 Jan").
+- [ ] Creating a request with a date like 2024-02-31, or a due date before the period starts, is refused.
+- [ ] Two reviewers pressing Approve on the same level-1 request at the same moment: one succeeds, the other is told someone else reviewed it.
+- [ ] A company cannot be set as its own parent, or as the child of one of its own subsidiaries.
+
 ## Security spot checks
 - [ ] Wrong password 11 times in a minute → HTTP 429 on the 11th.
 - [ ] An Investee cannot open Configuration, Audit Trail, Calculation, Output Report (menu entries hidden and URLs redirect).

@@ -2,7 +2,7 @@
 
 ("Verdant" is a working product name; it appears in `apps/web/src/components/Logo.tsx`, `pages/Login.tsx`, `components/Layout.tsx` and `index.html` and is easy to change.)
 
-Web app for end-to-end ESG data management: data requests to portfolio companies, two-step review, emission calculation, reports and an audit trail. See [PLAN.md](PLAN.md) for the original plan and [docs/UAT.md](docs/UAT.md) for the acceptance checklist.
+Web app for end-to-end ESG data management: data requests to portfolio companies, two-step review, emission calculation, reports and an audit trail. See [PLAN.md](PLAN.md) for the original plan, [docs/SYSTEM.md](docs/SYSTEM.md) for a full description of the rules, security controls, known limits and review findings, and [docs/UAT.md](docs/UAT.md) for the acceptance checklist.
 
 ## Structure
 - `apps/api` – NestJS 11 + Prisma + PostgreSQL (JWT auth, role-based access, audit logging, scheduler, PDF/Excel export)

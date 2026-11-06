@@ -1,3 +1,4 @@
+import { parseNumber } from '../common/number';
 import { evaluateFormula, FormulaError, parseFormula, variablesOf } from '../formula/formula-engine';
 import type { ResolvedVariable } from '../formula/formula.service';
 
@@ -19,11 +20,7 @@ export interface LineOutput {
   error: string | null;
 }
 
-const toNumber = (v: string | null) => {
-  if (v === null || v.trim() === '') return null;
-  const n = Number(v.replace(/,/g, ''));
-  return Number.isFinite(n) ? n : null;
-};
+const toNumber = parseNumber;
 
 const fail = (error: string, base: Partial<LineOutput> = {}): LineOutput => ({
   result: null,

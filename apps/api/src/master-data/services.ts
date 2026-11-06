@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { AuditService } from '../audit/audit.service';
+import { parseDay } from '../common/dates';
 import { CrudConfig, CrudService } from '../common/crud.service';
 import { PrismaService } from '../prisma/prisma.service';
 
-const toDate = (v: unknown) => (v ? new Date(v as string) : v === null ? null : undefined);
+const toDate = (v: unknown) => (v ? (parseDay(v) ?? undefined) : v === null ? null : undefined);
 
 abstract class Base extends CrudService {
   constructor(prisma: PrismaService, audit: AuditService, config: CrudConfig) {
@@ -22,6 +23,31 @@ export class CompaniesService extends Base {
       filters: ['type', 'active', 'parentId'],
       include: { contacts: true },
     });
+  }
+
+  /** A parent must exist and must not be the company itself or one of its own descendants. */
+  private async assertValidParent(selfId: string | undefined, parentId: string | null | undefined) {
+    if (!parentId) return;
+    if (parentId === selfId) throw new BadRequestException('A company cannot be its own parent');
+    const seen = new Set<string>();
+    for (let current: string | null = parentId; current; ) {
+      if (current === selfId) throw new BadRequestException('That parent would put the company inside its own branch');
+      if (seen.has(current)) break; // an older loop already in the data; do not spin on it
+      seen.add(current);
+      const row: { parentId: string | null } | null = await this.prisma.company.findUnique({ where: { id: current }, select: { parentId: true } });
+      if (!row) throw new BadRequestException('The parent company does not exist');
+      current = row.parentId;
+    }
+  }
+
+  async create(dto: any, user: any) {
+    await this.assertValidParent(undefined, dto.parentId);
+    return super.create(dto, user);
+  }
+
+  async update(id: string, dto: any, user: any) {
+    if (dto.parentId !== undefined) await this.assertValidParent(id, dto.parentId);
+    return super.update(id, dto, user);
   }
 
   protected toCreateData({ contacts, ...rest }: any) {

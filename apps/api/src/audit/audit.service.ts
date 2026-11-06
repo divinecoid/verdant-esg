@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AuditAction, Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthUser } from '../common/current-user.decorator';
+import { parseDay } from '../common/dates';
 
 const stringify = (v: unknown) => (v === undefined || v === null ? null : typeof v === 'object' ? JSON.stringify(v) : String(v));
 
@@ -43,8 +44,11 @@ export class AuditService {
   /** Filters shared by the list and the Excel export. `from`/`to` are UTC calendar days, both inclusive. */
   private where(f: { object?: string; from?: string; to?: string }): Prisma.AuditLogWhereInput {
     const changedAt: Prisma.DateTimeFilter = {};
-    if (f.from) changedAt.gte = new Date(`${f.from}T00:00:00.000Z`);
-    if (f.to) changedAt.lte = new Date(`${f.to}T23:59:59.999Z`);
+    if (f.from) changedAt.gte = parseDay(f.from) ?? undefined;
+    if (f.to) {
+      const end = parseDay(f.to);
+      if (end) changedAt.lte = new Date(end.getTime() + 86_399_999);
+    }
     return {
       ...(f.object && { object: { contains: f.object, mode: 'insensitive' } }),
       ...(Object.keys(changedAt).length && { changedAt }),

@@ -2,16 +2,16 @@ import { BadRequestException, Controller, Get, NotFoundException, Param, Query, 
 import { Role } from '@prisma/client';
 import ExcelJS from 'exceljs';
 import type { Response } from 'express';
+import { parseDay } from '../common/dates';
 import { Roles } from '../common/roles.decorator';
 import { AuditService } from './audit.service';
 
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
 /** The export is meant for review, not bulk extraction; ask for a narrower range beyond this. */
 const EXPORT_LIMIT = 20_000;
 
 const day = (raw: string | undefined, name: string) => {
   if (raw === undefined || raw === '') return undefined;
-  if (!DAY.test(raw) || Number.isNaN(Date.parse(`${raw}T00:00:00Z`))) throw new BadRequestException(`${name} must be a date like 2024-01-31`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw) || !parseDay(raw)) throw new BadRequestException(`${name} must be a date like 2024-01-31`);
   return raw;
 };
 

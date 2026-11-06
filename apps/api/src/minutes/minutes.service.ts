@@ -1,7 +1,8 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PartialType } from '@nestjs/mapped-types';
 import { AuditAction, Prisma } from '@prisma/client';
-import { IsDateString, IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { IsNotEmpty, IsString, MaxLength } from 'class-validator';
+import { IsCalendarDate, parseDay } from '../common/dates';
 import { AuditService } from '../audit/audit.service';
 import { AuthUser } from '../common/current-user.decorator';
 import { deleteUpload, saveUpload, uploadPath } from '../common/storage';
@@ -9,14 +10,15 @@ import { PrismaService } from '../prisma/prisma.service';
 
 export class CreateMinutesDto {
   @IsString() @IsNotEmpty() companyId: string;
-  @IsDateString() eventDate: string;
+  @IsCalendarDate() eventDate: string;
   @IsString() @IsNotEmpty() @MaxLength(5000) notes: string;
 }
 export class UpdateMinutesDto extends PartialType(CreateMinutesDto) {}
 
 const OBJECT = 'Minutes of Meeting';
 const COMPANY = { select: { id: true, code: true, name: true } };
-const parseDate = (s: string) => new Date(`${s.slice(0, 10)}T00:00:00Z`);
+/** Validated by IsCalendarDate before it gets here. */
+const parseDate = (s: string) => parseDay(s)!;
 
 /** Strip storage internals before returning a row to a client. */
 const present = <T extends { attachmentKey: string | null }>({ attachmentKey, ...rest }: T) => ({ ...rest, hasAttachment: !!attachmentKey });
