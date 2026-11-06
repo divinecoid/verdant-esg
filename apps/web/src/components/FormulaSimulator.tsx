@@ -45,7 +45,7 @@ export default function FormulaSimulator() {
   const needsInput = out?.variables.filter((v) => v.source === 'input') ?? [];
 
   return (
-    <section className="space-y-3 rounded-lg border border-neutral-200 bg-white p-4" aria-label="Formula simulator">
+    <section className="space-y-3 card p-4" aria-label="Formula simulator">
       <h2 className="text-sm font-semibold">Formula Simulator</h2>
       <div className="grid gap-3 sm:grid-cols-[1fr_8rem]">
         <div>

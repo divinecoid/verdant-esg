@@ -4,7 +4,7 @@ import RequestTable from '../components/RequestTable';
 export default function TaskInbox() {
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Pending Review List</h1>
+      <h1 className="display text-[36px] text-neutral-900">Pending Review List</h1>
       <RequestTable statuses="SUBMITTED" showReviewLevel actionLabel={() => 'Review'} />
     </div>
   );

@@ -36,6 +36,7 @@ interface Line {
   scope: string | null;
   unit: string | null;
   inputValue: string | null;
+  inputUnit: string | null;
   formulaCode: string | null;
   formulaExpression: string | null;
   emissionFactor: string | null;
@@ -87,7 +88,7 @@ export function Calculation() {
       enableSorting: false,
       enableColumnFilter: false,
       cell: ({ row }) => (
-        <Link to={`/calculation/${row.original.id}`} className="rounded bg-sky-100 px-2 py-1 text-xs text-sky-700 hover:bg-sky-200">
+        <Link to={`/calculation/${row.original.id}`} className="rounded-md bg-forest-100 px-2.5 py-1 text-xs font-medium text-forest-800 hover:bg-forest-200">
           View
         </Link>
       ),
@@ -97,7 +98,7 @@ export function Calculation() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Calculation Result List</h1>
+        <h1 className="display text-[36px] text-neutral-900">Calculation Result List</h1>
         {canRun && (
           <button onClick={() => setRunning(true)} className="rounded-md bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600">
             Run Calculation
@@ -161,7 +162,7 @@ function RunDialog({ onClose }: { onClose: () => void }) {
           {approved.data && approved.data.items.length === 0 && <p className="mt-1 text-xs text-neutral-500">No approved data requests yet.</p>}
         </div>
         <p className="text-xs text-neutral-500">Running again keeps the earlier results; the newest run is the one used in reports.</p>
-        {error && <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {error && <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">{error}</p>}
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="rounded-md border border-neutral-300 px-4 py-2 text-sm">Cancel</button>
           <button
@@ -188,13 +189,13 @@ function ResultTable({ lines }: { lines: Line[] }) {
       {themes.map((theme) => (
         <section key={theme}>
           <h3 className="mb-2 text-sm font-semibold">{theme}</h3>
-          <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+          <div className="card overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-neutral-600 text-left text-white">
+              <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-[0.1em] text-neutral-500 [&_th]:py-3 [&_th]:font-semibold">
                 <tr>
                   <th className="px-3 py-2">Source</th>
                   <th className="px-3 py-2">Scope</th>
-                  <th className="px-3 py-2">Units</th>
+                  <th className="px-3 py-2">Result unit</th>
                   <th className="px-3 py-2">Input</th>
                   <th className="px-3 py-2">Emissions Factor</th>
                   <th className="px-3 py-2">Result</th>
@@ -212,9 +213,9 @@ function ResultTable({ lines }: { lines: Line[] }) {
                     </td>
                     <td className="px-3 py-2">{l.scope ?? '-'}</td>
                     <td className="px-3 py-2">{l.unit ?? '-'}</td>
-                    <td className="px-3 py-2">{l.inputValue ?? '-'}</td>
+                    <td className="px-3 py-2">{l.inputValue ?? '-'} <span className="text-xs text-neutral-400">{l.inputUnit && l.inputUnit !== l.unit ? l.inputUnit : ''}</span></td>
                     <td className="px-3 py-2">{fmt(l.emissionFactor)}</td>
-                    <td className="px-3 py-2 font-medium text-sky-700">{fmt(l.result)}</td>
+                    <td className="px-3 py-2 font-medium text-forest-700">{fmt(l.result)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -237,9 +238,9 @@ export function CalculationDetail() {
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <Link to="/calculation" className="text-sm text-neutral-500 hover:text-neutral-900">← Back</Link>
-        <h1 className="text-lg font-semibold">Calculation Result Detail {data.label}</h1>
+        <h1 className="display text-[36px] text-neutral-900">Calculation Result Detail {data.label}</h1>
       </div>
-      <section className="rounded-lg bg-white p-4" aria-label="Information">
+      <section className="card p-5" aria-label="Information">
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-4">
           {[
             ['Portfolio Company', data.request.company.name],

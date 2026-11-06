@@ -36,6 +36,14 @@ Tick each line as a person in the stated role performs it. Use a staging databas
 - [ ] Minutes of Meeting: add, edit, attach a file (replace it), download it, delete it.
 - [ ] Audit Trail: every step above is listed; filter by object and by date range; Export to Excel opens with one row per changed field.
 
+## Targets, index and registers
+- [ ] Run `npm run db:seed:catalog`; the ESG Catalog shows the themes and metrics, and Formula shows five formulas. Run it again: nothing changes or duplicates.
+- [ ] Add a target "at most" for a calculated metric and one "at least" for a percentage metric; after approved data exists, the dashboard shows both with attainment and a trend line.
+- [ ] A calculated metric's actual on the dashboard equals the sum of its calculation results (not the raw kWh/litres).
+- [ ] A zero-incident target (at most 0) with one incident shows 0% and "Off track"; with none, 100% and "Met".
+- [ ] Risk & Compliance: add an incident, an overdue audit finding, a risk scored 16 and a non-compliant item; the dashboard indicators and risk matrix change accordingly.
+- [ ] ⌘K / Ctrl+K opens the command palette; typing "safety" finds Risk & Compliance. The sidebar and every page remain usable on a phone-width screen.
+
 ## Security spot checks
 - [ ] Wrong password 11 times in a minute → HTTP 429 on the 11th.
 - [ ] An Investee cannot open Configuration, Audit Trail, Calculation, Output Report (menu entries hidden and URLs redirect).

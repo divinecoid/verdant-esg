@@ -50,7 +50,7 @@ export default function AuditTrail() {
       enableColumnFilter: false,
       enableSorting: false,
       cell: ({ row }) => (
-        <button className="text-xs text-sky-700 hover:underline" onClick={() => setSelected(row.original.id)}>
+        <button className="text-xs text-forest-700 hover:underline" onClick={() => setSelected(row.original.id)}>
           View
         </button>
       ),
@@ -60,7 +60,7 @@ export default function AuditTrail() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-lg font-semibold">Audit Trail Overview</h1>
+        <h1 className="display text-[36px] text-neutral-900">Audit Trail Overview</h1>
         <button
           onClick={() => {
             setExportError(undefined);
@@ -92,8 +92,8 @@ export default function AuditTrail() {
           </div>
         ))}
       </div>
-      {exportError && <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{exportError}</p>}
-      {error && <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{(error as Error).message}</p>}
+      {exportError && <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">{exportError}</p>}
+      {error && <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">{(error as Error).message}</p>}
       <DataTable
         columns={columns}
         data={data?.items ?? []}

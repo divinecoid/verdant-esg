@@ -53,9 +53,9 @@ export default function MinutesOfMeeting() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Minutes of Meeting</h1>
+      <h1 className="display text-[36px] text-neutral-900">Minutes of Meeting</h1>
 
-      <section className="rounded-lg bg-white p-4" aria-label="Search criteria">
+      <section className="card p-5" aria-label="Search criteria">
         <h2 className="mb-3 text-sm font-semibold">Search Criteria</h2>
         <form
           className="grid gap-3 md:grid-cols-[2fr_minmax(6rem,1fr)_auto]"
@@ -87,7 +87,7 @@ export default function MinutesOfMeeting() {
       {applied && (
         <>
           {company.data && (
-            <section className="grid gap-3 rounded-lg bg-white p-4 text-sm md:grid-cols-2" aria-label="Contacts and related portfolio">
+            <section className="grid gap-3 card p-5 text-sm md:grid-cols-2" aria-label="Contacts and related portfolio">
               <div>
                 <h3 className="mb-1 text-xs font-semibold text-neutral-500">Contact Person</h3>
                 {company.data.contacts.length === 0 ? '-' : company.data.contacts.map((c, i) => (
@@ -111,11 +111,11 @@ export default function MinutesOfMeeting() {
               </button>
             )}
           </div>
-          {error && <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+          {error && <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">{error}</p>}
 
-          <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+          <div className="card overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-neutral-600 text-left text-white">
+              <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-[0.1em] text-neutral-500 [&_th]:py-3 [&_th]:font-semibold">
                 <tr>
                   <th className="px-3 py-2">Company</th>
                   <th className="px-3 py-2">Event Date</th>
@@ -136,7 +136,7 @@ export default function MinutesOfMeeting() {
                       <td className="px-3 py-2 whitespace-nowrap">{m.eventDate.slice(0, 10)}</td>
                       <td className="px-3 py-2">
                         {m.hasAttachment ? (
-                          <button className="rounded bg-sky-100 px-2 py-1 text-xs text-sky-700 hover:bg-sky-200" onClick={() => downloadFile(`/minutes/${m.id}/attachment`, m.attachmentName ?? 'minutes').catch((e) => setError(e.message))}>
+                          <button className="rounded-md bg-forest-100 px-2.5 py-1 text-xs font-medium text-forest-800 hover:bg-forest-200" onClick={() => downloadFile(`/minutes/${m.id}/attachment`, m.attachmentName ?? 'minutes').catch((e) => setError(e.message))}>
                             Download Here
                           </button>
                         ) : '-'}
@@ -144,7 +144,7 @@ export default function MinutesOfMeeting() {
                       <td className="whitespace-pre-wrap px-3 py-2">{m.notes}</td>
                       {canWrite && (
                         <td className="whitespace-nowrap px-3 py-2 text-xs">
-                          <button className="mr-3 text-sky-700 hover:underline" onClick={() => setEditing(m)}>Edit</button>
+                          <button className="mr-3 text-forest-700 hover:underline" onClick={() => setEditing(m)}>Edit</button>
                           <button className="text-red-600 hover:underline" onClick={() => window.confirm('Delete this meeting record?') && remove.mutate(m.id)}>Delete</button>
                         </td>
                       )}
@@ -211,7 +211,7 @@ function MeetingForm({ meeting, companyId, onClose, onSaved }: { meeting: Meetin
           </label>
           <input id="m-file" ref={file} type="file" accept=".pdf,.png,.jpg,.jpeg,.xlsx,.xls,.docx,.doc,.csv,.txt" className="text-sm" />
         </div>
-        {error && <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {error && <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">{error}</p>}
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="rounded-md border border-neutral-300 px-4 py-2 text-sm">Cancel</button>
           <button type="submit" disabled={save.isPending} className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60">

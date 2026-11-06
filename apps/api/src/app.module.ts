@@ -14,6 +14,8 @@ import { CalculationModule } from './calculation/calculation.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { DashboardModule } from './dashboard/dashboard.controller';
 import { MinutesModule } from './minutes/minutes.controller';
+import { PerformanceModule } from './performance/performance.controller';
+import { RegistersModule } from './registers/registers.module';
 import { HealthController } from './health/health.controller';
 import { JwtAuthGuard } from './auth/jwt-auth.guard';
 import { RolesGuard } from './auth/roles.guard';
@@ -31,6 +33,8 @@ import { RolesGuard } from './auth/roles.guard';
     DataRequestModule,
     CalculationModule,
     DashboardModule,
+    PerformanceModule,
+    RegistersModule,
     MinutesModule,
     ScheduleModule.forRoot(),
     // Generous default for every route; login has its own much tighter limit (see AuthController).

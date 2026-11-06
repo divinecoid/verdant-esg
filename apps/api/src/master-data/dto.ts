@@ -1,6 +1,8 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  MaxLength,
   ArrayUnique,
   IsArray,
   IsBoolean,
@@ -16,7 +18,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { CompanyType, EsgGroup } from '@prisma/client';
+import { CompanyType, EsgGroup, MetricAggregation } from '@prisma/client';
 
 const optionalString = () => (target: object, key: string) => {
   IsOptional()(target, key);
@@ -67,7 +69,13 @@ export class CreateEsgMetricDto {
   @IsString() @IsNotEmpty() name: string;
   @IsString() @IsNotEmpty() themeId: string;
   @optionalString() scope?: string;
+  /** Unit of the value a company enters (e.g. kWh). */
   @optionalString() unit?: string;
+  /** Unit after the formula runs (e.g. tCO2-e); leave empty when it equals `unit`. */
+  @optionalString() resultUnit?: string;
+  @IsOptional() @IsEnum(MetricAggregation) aggregation?: MetricAggregation;
+  /** Disclosure references such as "GRI 302-1" or "IFRS S2". */
+  @IsOptional() @IsArray() @ArrayMaxSize(10) @IsString({ each: true }) @MaxLength(60, { each: true }) standardRefs?: string[];
   @IsOptional() @IsBoolean() active?: boolean;
 }
 export class UpdateEsgMetricDto extends PartialType(CreateEsgMetricDto) {}

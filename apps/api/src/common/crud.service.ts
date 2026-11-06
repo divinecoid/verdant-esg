@@ -14,6 +14,8 @@ export interface CrudConfig {
   search?: string[];
   /** Query parameters that filter by exact value. */
   filters?: string[];
+  /** Filters whose column is an integer (the query string value is converted). */
+  numericFilters?: string[];
   include?: Record<string, unknown>;
 }
 
@@ -68,6 +70,11 @@ export class CrudService {
     for (const key of allowed) {
       const v = filters[key];
       if (v === undefined || v === '') continue;
+      if (this.config.numericFilters?.includes(key)) {
+        const n = Number(v);
+        if (Number.isInteger(n)) where[key] = n;
+        continue;
+      }
       where[key] = v === 'true' ? true : v === 'false' ? false : v;
     }
     if (q && search.length) {

@@ -57,6 +57,11 @@ model Company {
   active           Boolean            @default(true)
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
+  metricTargets    MetricTarget[]
+  incidents        Incident[]
+  auditFindings    AuditFinding[]
+  risks            Risk[]
+  complianceItems  ComplianceItem[]
 }
 
 model CompanyContact {
@@ -124,6 +129,10 @@ model EsgTheme {
 }
 
 model EsgMetric {
+  /// Unit of what the company types in (e.g. kWh). `resultUnit` is the unit after calculation (e.g. tCO2-e); empty = same.
+  resultUnit             String?
+  aggregation            MetricAggregation       @default(SUM)
+  standardRefs           String[]                @default([])
   id                     String                  @id @default(cuid())
   code                   String                  @unique
   name                   String
@@ -138,6 +147,7 @@ model EsgMetric {
   updatedAt              DateTime                @updatedAt
   dataRequestValues      DataRequestValue[]
   calculationResultLines CalculationResultLine[]
+  metricTargets          MetricTarget[]
 }
 
 model DataInputAttribute {
@@ -361,6 +371,7 @@ model CalculationResultLine {
   metricId          String
   metric            EsgMetric      @relation(fields: [metricId], references: [id])
   metricName        String
+  inputUnit         String?
   themeName         String
   esgGroup          EsgGroup
   scope             String?
@@ -390,4 +401,131 @@ model MinutesOfMeeting {
   updatedAt      DateTime @updatedAt
 
   @@index([companyId, eventDate])
+}
+
+/// How a metric's per-period values combine into one annual figure.
+enum MetricAggregation {
+  SUM
+  AVERAGE
+  LATEST
+}
+
+enum TargetDirection {
+  AT_MOST
+  AT_LEAST
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentStatus {
+  OPEN
+  INVESTIGATING
+  CLOSED
+}
+
+enum FindingStatus {
+  OPEN
+  IN_PROGRESS
+  CLOSED
+}
+
+enum RiskStatus {
+  OPEN
+  MITIGATING
+  ACCEPTED
+  CLOSED
+}
+
+enum ComplianceStatus {
+  COMPLIANT
+  PARTIAL
+  NON_COMPLIANT
+  NOT_APPLICABLE
+}
+
+model MetricTarget {
+  id        String          @id @default(cuid())
+  metricId  String
+  metric    EsgMetric       @relation(fields: [metricId], references: [id], onDelete: Cascade)
+  companyId String
+  company   Company         @relation(fields: [companyId], references: [id])
+  year      Int
+  value     Decimal         @db.Decimal(24, 6)
+  direction TargetDirection
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@unique([metricId, companyId, year])
+}
+
+model Incident {
+  id          String         @id @default(cuid())
+  companyId   String
+  company     Company        @relation(fields: [companyId], references: [id])
+  occurredAt  DateTime       @db.Date
+  type        String
+  severity    Severity
+  description String
+  lostDays    Int?
+  status      IncidentStatus @default(OPEN)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([companyId, occurredAt])
+}
+
+model AuditFinding {
+  id          String        @id @default(cuid())
+  companyId   String
+  company     Company       @relation(fields: [companyId], references: [id])
+  source      String
+  reportedAt  DateTime      @db.Date
+  severity    Severity
+  description String
+  owner       String?
+  dueDate     DateTime?     @db.Date
+  status      FindingStatus @default(OPEN)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([companyId, status])
+}
+
+model Risk {
+  id         String     @id @default(cuid())
+  companyId  String
+  company    Company    @relation(fields: [companyId], references: [id])
+  title      String
+  category   String
+  likelihood Int
+  impact     Int
+  owner      String?
+  mitigation String?
+  status     RiskStatus @default(OPEN)
+  reviewDate DateTime?  @db.Date
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@index([companyId, status])
+}
+
+model ComplianceItem {
+  id             String           @id @default(cuid())
+  companyId      String
+  company        Company          @relation(fields: [companyId], references: [id])
+  regulation     String
+  requirement    String
+  status         ComplianceStatus @default(NON_COMPLIANT)
+  dueDate        DateTime?        @db.Date
+  lastReviewedAt DateTime?        @db.Date
+  notes          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@index([companyId, status])
 }

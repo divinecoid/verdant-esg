@@ -103,7 +103,7 @@ function NewRequest({ onClose, onCreated }: { onClose: () => void; onCreated: ()
         {type === 'AD_HOC' &&
           field('notes', 'Notes', <textarea id="nr-notes" rows={3} className={inputClass} {...register('notes', { required: true })} />)}
 
-        {error && <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {error && <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">{error}</p>}
         <div className="flex justify-end gap-2 pt-2">
           <button type="button" onClick={onClose} className="rounded-md border border-neutral-300 px-4 py-2 text-sm">Cancel</button>
           <button type="submit" disabled={create.isPending} className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60">
@@ -126,7 +126,7 @@ export default function DataRequests() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Data Request List</h1>
+        <h1 className="display text-[36px] text-neutral-900">Data Request List</h1>
         {canCreate && (
           <button onClick={() => setCreating(true)} className="rounded-md bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600">
             + Send Data Request

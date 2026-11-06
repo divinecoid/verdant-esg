@@ -3,6 +3,7 @@ import { useAuth } from '../auth/AuthContext';
 import MasterCrud, { type FieldDef } from '../components/MasterCrud';
 import StatusBadge from '../components/StatusBadge';
 import Tabs from '../components/Tabs';
+import PageHeader from '../components/PageHeader';
 
 interface Config { id: string; code: string; value: string; description: string | null }
 
@@ -94,6 +95,8 @@ const userFields: FieldDef[] = [
 export default function Configuration() {
   const { user } = useAuth();
   return (
+    <>
+    <PageHeader eyebrow="Setup" title="Settings" description="Reviewers, data-capture schedules and user accounts." />
     <Tabs
       tabs={[
         {
@@ -121,5 +124,6 @@ export default function Configuration() {
           : []),
       ]}
     />
+    </>
   );
 }

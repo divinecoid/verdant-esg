@@ -1,14 +1,185 @@
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
+@import "@fontsource/instrument-serif";
 @import "tailwindcss";
 
+/*
+ * Design tokens. The palette is a deep forest green on warm paper, with one colour per ESG pillar that stays
+ * the same everywhere (charts, rings, badges). Existing `brand-*` and `neutral-*` utilities are remapped here so
+ * every page picks up the new look without per-page edits.
+ */
 @theme {
-  --color-brand-50: #f1f9e8;
-  --color-brand-100: #dff0c8;
-  --color-brand-500: #6aa817;
-  --color-brand-600: #5a9112;
-  --color-brand-700: #487410;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+
+  --color-forest-50: #f2f8f4;
+  --color-forest-100: #e2f0e8;
+  --color-forest-200: #c5e1d2;
+  --color-forest-300: #96c7ae;
+  --color-forest-400: #5fa583;
+  --color-forest-500: #3a8463;
+  --color-forest-600: #2b6850;
+  --color-forest-700: #1f4a38;
+  --color-forest-800: #153127;
+  --color-forest-900: #0e211a;
+  --color-forest-950: #081410;
+  --color-lime: #c9f26a;
+  --color-lime-dim: #9bc43a;
+
+  --color-brand-50: #f2f8f4;
+  --color-brand-100: #e2f0e8;
+  --color-brand-500: #2b6850;
+  --color-brand-600: #1f4a38;
+  --color-brand-700: #153127;
+
+  --color-paper: #f4f1e9;
+  --color-card: #fffefb;
+
+  --color-neutral-50: #faf8f2;
+  --color-neutral-100: #f4f1e9;
+  --color-neutral-200: #e6e1d4;
+  --color-neutral-300: #d5cfbd;
+  --color-neutral-400: #a8aa9f;
+  --color-neutral-500: #77837c;
+  --color-neutral-600: #55625b;
+  --color-neutral-700: #3b4841;
+  --color-neutral-800: #25312b;
+  --color-neutral-900: #14201b;
+
+  /* One colour per pillar, used consistently across the whole app. */
+  --color-env: #2f8f65;
+  --color-soc: #d4693a;
+  --color-gov: #4d62b3;
+
+  --color-ok: #2f8f65;
+  --color-warn: #d49a1d;
+  --color-bad: #c2432a;
+
+  --radius-card: 14px;
+  --shadow-card: 0 1px 0 rgb(20 32 27 / 0.03), 0 10px 28px -16px rgb(20 32 27 / 0.18);
+  --shadow-pop: 0 24px 60px -20px rgb(8 20 16 / 0.45);
 }
 
-body {
-  @apply bg-neutral-100 text-neutral-900 antialiased;
-  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+@layer base {
+  html {
+    color-scheme: light;
+  }
+  body {
+    background-color: var(--color-paper);
+    /* faint paper grain so large flat areas don't feel digital */
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.08 0 0 0 0 0.12 0 0 0 0 0.1 0 0 0 .05 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    color: var(--color-neutral-900);
+    font-family: var(--font-sans);
+    font-feature-settings: "ss01", "cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.015em;
+  }
+  ::selection {
+    background: var(--color-lime);
+    color: var(--color-forest-950);
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-forest-500);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  input,
+  select,
+  textarea {
+    background-color: var(--color-card);
+  }
+  input:disabled,
+  select:disabled,
+  textarea:disabled {
+    background-color: var(--color-neutral-100);
+    color: var(--color-neutral-500);
+  }
+  /* numbers line up in columns everywhere */
+  table,
+  .num {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--color-card);
+    border: 1px solid var(--color-neutral-200);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-card);
+  }
+  .eyebrow {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-neutral-500);
+  }
+  .display {
+    font-family: var(--font-display);
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1;
+  }
+  .mono {
+    font-family: var(--font-mono);
+    font-size: 0.92em;
+  }
+  .skeleton {
+    border-radius: 8px;
+    background: linear-gradient(100deg, var(--color-neutral-200) 30%, var(--color-neutral-100) 50%, var(--color-neutral-200) 70%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s linear infinite;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }

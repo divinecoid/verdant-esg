@@ -38,7 +38,7 @@ export class CalculationService {
       include: {
         values: {
           include: {
-            metric: { select: { id: true, name: true, scope: true, unit: true, theme: { select: { name: true, group: true } } } },
+            metric: { select: { id: true, name: true, scope: true, unit: true, resultUnit: true, theme: { select: { name: true, group: true } } } },
           },
         },
       },
@@ -68,7 +68,9 @@ export class CalculationService {
         themeName: v.metric.theme.name,
         esgGroup: v.metric.theme.group,
         scope: v.metric.scope,
-        unit: v.metric.unit,
+        // `unit` is the unit of the result (what reports total up); `inputUnit` is what the company typed in.
+        unit: v.metric.resultUnit ?? v.metric.unit,
+        inputUnit: v.metric.unit,
         inputValue: v.value,
         formulaCode: out.formulaCode,
         formulaExpression: out.formulaExpression,

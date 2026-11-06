@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import MasterCrud, { type FieldDef } from '../components/MasterCrud';
 import StatusBadge from '../components/StatusBadge';
 import Tabs from '../components/Tabs';
+import PageHeader from '../components/PageHeader';
 
 interface Company {
   id: string;
@@ -99,6 +100,8 @@ const projectFields: FieldDef[] = [
 
 export default function Companies() {
   return (
+    <>
+    <PageHeader eyebrow="Setup" title="Companies & Projects" description="The portfolio: holdings, subsidiaries, plants and the projects they run." />
     <Tabs
       tabs={[
         {
@@ -117,5 +120,6 @@ export default function Companies() {
         },
       ]}
     />
+    </>
   );
 }

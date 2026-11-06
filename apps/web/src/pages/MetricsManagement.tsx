@@ -52,9 +52,9 @@ export default function MetricsManagement() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Metrics Management</h1>
+      <h1 className="display text-[36px] text-neutral-900">Metrics Management</h1>
 
-      <div className="flex flex-wrap items-end justify-between gap-3 rounded-lg bg-white p-4">
+      <div className="flex flex-wrap items-end justify-between gap-3 card p-5">
         <div className="min-w-64">
           <label htmlFor="mm-company" className="mb-1 block text-xs font-medium text-neutral-700">
             Portfolio Company
@@ -87,12 +87,12 @@ export default function MetricsManagement() {
         )}
       </div>
 
-      {error && <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+      {error && <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">{error}</p>}
 
       {companyId && (
-        <div className="overflow-hidden rounded-lg border border-neutral-200 bg-white">
+        <div className="card overflow-hidden">
           <table className="w-full text-sm">
-            <thead className="bg-neutral-600 text-left text-white">
+            <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-[0.1em] text-neutral-500 [&_th]:py-3 [&_th]:font-semibold">
               <tr>
                 <th className="px-3 py-2">Version</th>
                 <th className="px-3 py-2">Status</th>
@@ -115,7 +115,7 @@ export default function MetricsManagement() {
                     <td className="px-3 py-2">{m.updatedAt.slice(0, 16).replace('T', ' ')}</td>
                     {canWrite && (
                       <td className="flex gap-3 px-3 py-2 text-xs">
-                        <button className="text-sky-700 hover:underline" onClick={() => setEditing(m)}>Edit</button>
+                        <button className="text-forest-700 hover:underline" onClick={() => setEditing(m)}>Edit</button>
                         {!m.active && (
                           <>
                             <button className="text-green-700 hover:underline" onClick={() => { setError(undefined); activate.mutate(m.id); }}>
@@ -258,7 +258,7 @@ function SelectionEditor({
           Set as the active version (deactivates the current one)
         </label>
 
-        {error && <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
+        {error && <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">{error}</p>}
         <div className="flex items-center justify-between gap-2 pt-2">
           <span className="text-xs text-neutral-500">{selected.size} metric(s) selected</span>
           <div className="flex gap-2">

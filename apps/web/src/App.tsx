@@ -14,6 +14,7 @@ import TaskInbox from './pages/TaskInbox';
 import { Calculation, CalculationDetail } from './pages/Calculation';
 import OutputReport from './pages/OutputReport';
 import MinutesOfMeeting from './pages/MinutesOfMeeting';
+import Registers from './pages/Registers';
 import Companies from './pages/Companies';
 import Configuration from './pages/Configuration';
 
@@ -33,6 +34,7 @@ function RequireRole({ roles, children }: { roles?: Role[]; children: React.Reac
 const implemented: Record<string, React.ReactNode> = {
   '/': <Dashboard />,
   '/minutes-of-meeting': <MinutesOfMeeting />,
+  '/registers': <Registers />,
   '/audit-trail': <AuditTrail />,
   '/master-data': <MasterData />,
   '/metrics': <MetricsManagement />,

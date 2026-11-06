@@ -12,7 +12,8 @@ type Option = { value: string; label: string };
 export interface FieldDef {
   name: string;
   label: string;
-  kind: 'text' | 'number' | 'select' | 'checkbox' | 'textarea' | 'date' | 'rows' | 'password';
+  /** `tags` is a comma-separated list that is sent to the API as an array of strings. */
+  kind: 'text' | 'number' | 'select' | 'checkbox' | 'textarea' | 'date' | 'rows' | 'password' | 'tags';
   required?: boolean;
   options?: Option[];
   /** Load select options from another list endpoint. */
@@ -35,7 +36,8 @@ interface Props<T> {
   allowDelete?: boolean;
 }
 
-const inputClass = 'w-full rounded-md border border-neutral-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-500';
+const inputClass =
+  'w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm outline-none transition-shadow placeholder:text-neutral-400 focus:border-forest-500 focus:shadow-[0_0_0_3px_var(--color-forest-200)]';
 
 /** Server-side-paged list with add/edit modal and delete, driven entirely by `fields` and `columns`. */
 export default function MasterCrud<T extends { id: string }>({
@@ -84,12 +86,12 @@ export default function MasterCrud<T extends { id: string }>({
               enableSorting: false,
               cell: ({ row }) => (
                 <div className="flex gap-3 text-xs">
-                  <button className="text-sky-700 hover:underline" onClick={() => setEditing(row.original)}>
+                  <button className="text-forest-700 hover:underline" onClick={() => setEditing(row.original)}>
                     Edit
                   </button>
                   {allowDelete && (
                     <button
-                      className="text-red-600 hover:underline"
+                      className="text-bad hover:underline"
                       onClick={() => {
                         if (window.confirm('Delete this record?')) {
                           setActionError(undefined);
@@ -111,7 +113,7 @@ export default function MasterCrud<T extends { id: string }>({
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-lg font-semibold">{title}</h1>
+        <h2 className="text-[15px] font-semibold text-neutral-900">{title}</h2>
         <div className="flex items-center gap-2">
           <input
             value={search}
@@ -121,12 +123,12 @@ export default function MasterCrud<T extends { id: string }>({
             }}
             placeholder="Search…"
             aria-label="Search"
-            className="rounded-md border border-neutral-300 px-3 py-1.5 text-sm"
+            className="rounded-lg border border-neutral-300 bg-card px-3 py-2 text-sm placeholder:text-neutral-400 focus:border-forest-500 focus:outline-none"
           />
           {canWrite && (
             <button
               onClick={() => setEditing('new')}
-              className="rounded-md bg-brand-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-600"
+              className="rounded-lg bg-forest-700 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-forest-800"
             >
               + {addLabel}
             </button>
@@ -135,7 +137,7 @@ export default function MasterCrud<T extends { id: string }>({
       </div>
 
       {actionError && (
-        <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">
           {actionError}
         </p>
       )}
@@ -184,6 +186,7 @@ function toFormValues(fields: FieldDef[], record: any | null, defaults: Record<s
         Object.fromEntries((f.rows ?? []).map((c) => [c.name, r[c.name] ?? ''])),
       );
     else if (f.kind === 'date') values[f.name] = raw ? String(raw).slice(0, 10) : '';
+    else if (f.kind === 'tags') values[f.name] = Array.isArray(raw) ? raw.join(', ') : '';
     else values[f.name] = raw ?? '';
   }
   return values;
@@ -194,6 +197,7 @@ function toPayload(fields: FieldDef[], values: Record<string, any>, isEdit: bool
   for (const f of fields) {
     const v = values[f.name];
     if (f.kind === 'checkbox') out[f.name] = !!v;
+    else if (f.kind === 'tags') out[f.name] = String(v ?? '').split(',').map((t) => t.trim()).filter(Boolean);
     else if (f.kind === 'rows')
       out[f.name] = (v as any[]).map((r) =>
         Object.fromEntries(
@@ -286,7 +290,7 @@ function RecordForm({
             <div key={f.name}>
               <label htmlFor={id} className="mb-1 block text-xs font-medium text-neutral-700">
                 {f.label}
-                {f.required && <span className="text-red-600"> *</span>}
+                {f.required && <span className="text-bad"> *</span>}
               </label>
               {f.kind === 'select' ? (
                 <select id={id} className={inputClass} {...register(f.name, rules)}>
@@ -310,24 +314,24 @@ function RecordForm({
                   {...register(f.name, rules)}
                 />
               )}
-              {err && <p className="mt-1 text-xs text-red-600">{err}</p>}
+              {err && <p className="mt-1 text-xs text-bad">{err}</p>}
             </div>
           );
         })}
 
         {error && (
-          <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">
+          <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">
             {error}
           </p>
         )}
         <div className="flex justify-end gap-2 pt-2">
-          <button type="button" onClick={onClose} className="rounded-md border border-neutral-300 px-4 py-2 text-sm">
+          <button type="button" onClick={onClose} className="rounded-lg border border-neutral-300 px-4 py-2 text-sm hover:bg-neutral-50">
             Cancel
           </button>
           <button
             type="submit"
             disabled={save.isPending}
-            className="rounded-md bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600 disabled:opacity-60"
+            className="rounded-lg bg-forest-700 px-4 py-2 text-sm font-medium text-white hover:bg-forest-800 disabled:opacity-60"
           >
             {save.isPending ? 'Saving…' : 'Save'}
           </button>
@@ -357,7 +361,7 @@ function RowsField({ field, control, register }: { field: FieldDef; control: any
                 />
               </div>
             ))}
-            <button type="button" onClick={() => remove(i)} className="pb-2 text-xs text-red-600">
+            <button type="button" onClick={() => remove(i)} className="pb-2 text-xs text-bad">
               Remove
             </button>
           </div>
@@ -365,7 +369,7 @@ function RowsField({ field, control, register }: { field: FieldDef; control: any
         <button
           type="button"
           onClick={() => append(Object.fromEntries(cols.map((c) => [c.name, ''])))}
-          className="text-xs text-sky-700 hover:underline"
+          className="text-xs text-forest-700 hover:underline"
         >
           + Add row
         </button>

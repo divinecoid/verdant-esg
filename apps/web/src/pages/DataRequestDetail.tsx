@@ -115,9 +115,9 @@ function Detail({
         {themes.map(([themeId, themeName]) => (
           <section key={themeId}>
             <h3 className="mb-2 text-sm font-semibold">{themeName}</h3>
-            <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+            <div className="card overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-neutral-600 text-left text-white">
+                <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-[0.1em] text-neutral-500 [&_th]:py-3 [&_th]:font-semibold">
                   <tr>
                     <th className="px-3 py-2">Item</th>
                     <th className="px-3 py-2">Units</th>
@@ -185,13 +185,13 @@ function Detail({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-3">
           <Link to="/data-request" className="text-sm text-neutral-500 hover:text-neutral-900">← Back</Link>
-          <h1 className="text-lg font-semibold">Data Request {request.label}</h1>
+          <h1 className="display text-[36px] text-neutral-900">Data Request {request.label}</h1>
           <StatusBadge status={STATUS_LABEL[request.status]} />
           {request.status === 'SUBMITTED' && <span className="text-xs text-neutral-500">waiting for review {request.reviewLevel} of 2</span>}
         </div>
         {canFill && (
           <div className="flex gap-2">
-            <button onClick={() => { setError(undefined); setNotice(undefined); save.mutate(); }} disabled={save.isPending || submit.isPending} className="rounded-md bg-sky-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-600 disabled:opacity-60">
+            <button onClick={() => { setError(undefined); setNotice(undefined); save.mutate(); }} disabled={save.isPending || submit.isPending} className="rounded-lg border border-neutral-300 bg-card px-3.5 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50 disabled:opacity-60">
               Save Draft
             </button>
             <button
@@ -211,10 +211,10 @@ function Detail({
         )}
       </div>
 
-      {error && <p role="alert" className="rounded bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
-      {notice && <p role="status" className="rounded bg-green-50 px-3 py-2 text-sm text-green-700">{notice}</p>}
+      {error && <p role="alert" className="rounded bg-[#f8e0da] px-3 py-2 text-sm text-[#8a2b17]">{error}</p>}
+      {notice && <p role="status" className="rounded bg-forest-100 px-3 py-2 text-sm text-forest-800">{notice}</p>}
 
-      <section className="space-y-3 rounded-lg bg-white p-4" aria-label="Information summary">
+      <section className="space-y-3 card p-5" aria-label="Information summary">
         <h2 className="text-sm font-semibold">Information Summary</h2>
         <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:grid-cols-4">
           {[
@@ -279,10 +279,10 @@ function ReviewPanel({
   });
 
   return (
-    <section className="space-y-3 rounded-lg border-l-4 border-brand-500 bg-white p-4" aria-label="Review">
+    <section className="space-y-3 card border-l-4 !border-l-forest-500 p-5" aria-label="Review">
       <h2 className="text-sm font-semibold">Review Internal – ESG (level {request.reviewLevel} of 2)</h2>
       {blocked && (
-        <p className="rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+        <p className="rounded bg-[#fbf0d3] px-3 py-2 text-sm text-[#7a5a0c]">
           You approved the first review. A different reviewer must do the second review.
         </p>
       )}
@@ -309,9 +309,9 @@ function ReviewPanel({
 function History({ request }: { request: RequestDetail }) {
   if (!request.approvals.length) return <p className="text-sm text-neutral-500">No review has been made yet.</p>;
   return (
-    <div className="overflow-x-auto rounded-lg border border-neutral-200 bg-white">
+    <div className="card overflow-x-auto">
       <table className="w-full text-sm">
-        <thead className="bg-neutral-600 text-left text-white">
+        <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-[0.1em] text-neutral-500 [&_th]:py-3 [&_th]:font-semibold">
           <tr>
             <th className="px-3 py-2">Level</th>
             <th className="px-3 py-2">ESG Team</th>
@@ -378,14 +378,14 @@ function Attachments({
       {request.attachments.length === 0 ? (
         <p className="text-sm text-neutral-500">No attachments.</p>
       ) : (
-        <ul className="divide-y rounded-lg border border-neutral-200 bg-white text-sm">
+        <ul className="divide-y card text-sm">
           {request.attachments.map((a) => (
             <li key={a.id} className="flex items-center justify-between px-3 py-2">
               <span>
                 {a.fileName} <span className="text-xs text-neutral-500">({kb(a.size)})</span>
               </span>
               <span className="flex gap-3 text-xs">
-                <button className="text-sky-700 hover:underline" onClick={() => downloadFile(`/data-requests/${request.id}/attachments/${a.id}`, a.fileName).catch(onError)}>
+                <button className="text-forest-700 hover:underline" onClick={() => downloadFile(`/data-requests/${request.id}/attachments/${a.id}`, a.fileName).catch(onError)}>
                   Download
                 </button>
                 {canFill && (

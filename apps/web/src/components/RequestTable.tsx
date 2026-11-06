@@ -70,7 +70,7 @@ export default function RequestTable({
       enableSorting: false,
       enableColumnFilter: false,
       cell: ({ row }) => (
-        <Link to={`/data-request/${row.original.id}`} className="rounded bg-sky-100 px-2 py-1 text-xs text-sky-700 hover:bg-sky-200">
+        <Link to={`/data-request/${row.original.id}`} className="rounded-md bg-forest-100 px-2.5 py-1 text-xs font-medium text-forest-800 hover:bg-forest-200">
           {actionLabel(row.original)}
         </Link>
       ),

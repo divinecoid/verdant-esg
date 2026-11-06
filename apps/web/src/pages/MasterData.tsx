@@ -2,6 +2,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import MasterCrud, { type FieldDef } from '../components/MasterCrud';
 import StatusBadge from '../components/StatusBadge';
 import Tabs from '../components/Tabs';
+import PageHeader from '../components/PageHeader';
 import FormulaSimulator from '../components/FormulaSimulator';
 
 const activeCell = ({ getValue }: { getValue: () => unknown }) => (
@@ -28,13 +29,15 @@ const themeFields: FieldDef[] = [
   { name: 'active', label: 'Active', kind: 'checkbox' },
 ];
 
-interface Metric { id: string; code: string; name: string; scope: string | null; unit: string | null; active: boolean; theme: { name: string } }
+interface Metric { id: string; code: string; name: string; scope: string | null; unit: string | null; resultUnit: string | null; aggregation: string; standardRefs: string[]; active: boolean; theme: { name: string } }
 const metricColumns: ColumnDef<Metric>[] = [
   { header: 'ESG Metric Code', accessorKey: 'code' },
   { header: 'ESG Metric Name', accessorKey: 'name' },
   { header: 'ESG Theme', accessorFn: (r) => r.theme.name },
   { header: 'Scope', accessorFn: (r) => r.scope ?? '-' },
-  { header: 'Unit', accessorFn: (r) => r.unit ?? '-' },
+  { header: 'Entered as', accessorFn: (r) => r.unit ?? '-' },
+  { header: 'Result', accessorFn: (r) => r.resultUnit ?? '–' },
+  { header: 'Standards', accessorFn: (r) => r.standardRefs.join(', ') || '–' },
   { header: 'Status', accessorKey: 'active', cell: activeCell, enableColumnFilter: false },
 ];
 const metricFields: FieldDef[] = [
@@ -48,7 +51,19 @@ const metricFields: FieldDef[] = [
     optionsFrom: { path: '/esg-themes', label: (t) => `${t.name} (${groupLabel(t.group)})` },
   },
   { name: 'scope', label: 'Scope', kind: 'text', placeholder: 'Scope 1 / Scope 2 / Scope 3' },
-  { name: 'unit', label: 'Unit', kind: 'text', placeholder: 'tCO2-e' },
+  { name: 'unit', label: 'Unit the company enters', kind: 'text', placeholder: 'kWh, %, count…  (empty for yes/no or text answers)' },
+  { name: 'resultUnit', label: 'Unit after calculation (only if a formula converts it)', kind: 'text', placeholder: 'tCO2-e' },
+  {
+    name: 'aggregation',
+    label: 'How periods combine into a yearly figure',
+    kind: 'select',
+    options: [
+      { value: 'SUM', label: 'Add up (energy, waste, incidents)' },
+      { value: 'AVERAGE', label: 'Average (rates, hours per person)' },
+      { value: 'LATEST', label: 'Latest period (headcount, shares)' },
+    ],
+  },
+  { name: 'standardRefs', label: 'Standards (comma-separated)', kind: 'tags', placeholder: 'GRI 302-1, IFRS S2' },
   { name: 'active', label: 'Active', kind: 'checkbox' },
 ];
 
@@ -147,8 +162,38 @@ const formulaFields: FieldDef[] = [
   { name: 'active', label: 'Active', kind: 'checkbox' },
 ];
 
+interface Target { id: string; year: number; value: string; direction: 'AT_MOST' | 'AT_LEAST'; company: { code: string; name: string }; metric: { code: string; name: string; unit: string | null; resultUnit: string | null } }
+const targetColumns: ColumnDef<Target>[] = [
+  { header: 'Company', accessorFn: (r) => `${r.company.code} – ${r.company.name}` },
+  { header: 'Metric', accessorFn: (r) => r.metric.name },
+  { header: 'Year', accessorKey: 'year' },
+  {
+    header: 'Target',
+    enableColumnFilter: false,
+    accessorFn: (r) => `${r.direction === 'AT_MOST' ? '≤' : '≥'} ${Number(r.value)} ${r.metric.resultUnit ?? r.metric.unit ?? ''}`.trim(),
+  },
+];
+const targetFields: FieldDef[] = [
+  { name: 'companyId', label: 'Company', kind: 'select', required: true, optionsFrom: { path: '/companies', label: (c) => `${c.code} – ${c.name}` } },
+  { name: 'metricId', label: 'Metric', kind: 'select', required: true, optionsFrom: { path: '/esg-metrics', label: (m) => `${m.code} – ${m.name}${m.resultUnit ? ` (${m.resultUnit})` : m.unit ? ` (${m.unit})` : ''}` } },
+  { name: 'year', label: 'Year', kind: 'number', required: true },
+  {
+    name: 'direction',
+    label: 'Goal',
+    kind: 'select',
+    required: true,
+    options: [
+      { value: 'AT_MOST', label: 'Stay at or below the target (emissions, accidents, waste)' },
+      { value: 'AT_LEAST', label: 'Reach at least the target (renewables, training, diversity)' },
+    ],
+  },
+  { name: 'value', label: 'Target value (in the unit shown for the metric)', kind: 'number', required: true },
+];
+
 export default function MasterData() {
   return (
+    <>
+    <PageHeader eyebrow="Setup" title="ESG Catalog" description="The themes, metrics, formulas and targets every company reports against." />
     <Tabs
       tabs={[
         {
@@ -190,6 +235,13 @@ export default function MasterData() {
           ),
         },
         {
+          id: 'targets',
+          label: 'Targets',
+          content: (
+            <MasterCrud<Target> title="Targets by company and year" addLabel="Add Target" endpoint="/targets" columns={targetColumns} fields={targetFields} defaults={{ year: new Date().getFullYear(), direction: 'AT_MOST' }} />
+          ),
+        },
+        {
           id: 'base-year',
           label: 'Base Year GHG',
           content: (
@@ -198,5 +250,6 @@ export default function MasterData() {
         },
       ]}
     />
+    </>
   );
 }

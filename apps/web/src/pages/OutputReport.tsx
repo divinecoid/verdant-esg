@@ -48,7 +48,7 @@ const fmt = (n: number) => n.toLocaleString('en-US', { maximumFractionDigits: 4 
 
 function ScopeChart({ data, title }: { data: { name: string; value: number }[]; title: string }) {
   return (
-    <figure className="rounded-lg border border-neutral-200 bg-white p-3" aria-label={title}>
+    <figure className="card p-3" aria-label={title}>
       <figcaption className="mb-2 text-center text-xs font-medium text-neutral-600">{title}</figcaption>
       <div className="h-56">
         <ResponsiveContainer width="100%" height="100%">
@@ -76,7 +76,7 @@ function EmissionTables({ summary, showCompany }: { summary: Summary; showCompan
         <div>
           <h3 className="mb-2 text-sm font-semibold">Summary View</h3>
           <table className="w-full text-sm">
-            <thead className="bg-neutral-600 text-left text-white">
+            <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-[0.1em] text-neutral-500 [&_th]:py-3 [&_th]:font-semibold">
               <tr><th className="px-3 py-2">Item</th><th className="px-3 py-2">Units</th><th className="px-3 py-2">Value</th><th className="px-3 py-2">Percentage</th></tr>
             </thead>
             <tbody>
@@ -98,7 +98,7 @@ function EmissionTables({ summary, showCompany }: { summary: Summary; showCompan
         <div>
           <h3 className="mb-2 text-sm font-semibold">Emissions by Source</h3>
           <table className="w-full text-sm">
-            <thead className="bg-neutral-600 text-left text-white">
+            <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-[0.1em] text-neutral-500 [&_th]:py-3 [&_th]:font-semibold">
               <tr>
                 <th className="px-3 py-2">Item</th>
                 {showCompany && <th className="px-3 py-2">Company</th>}
@@ -145,7 +145,7 @@ function AnswerTable({ rows }: { rows: Report['social'] }) {
   if (!rows.length) return <p className="text-sm text-neutral-500">No metrics in this group.</p>;
   return (
     <table className="w-full text-sm">
-      <thead className="bg-neutral-600 text-left text-white">
+      <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-[0.1em] text-neutral-500 [&_th]:py-3 [&_th]:font-semibold">
         <tr><th className="px-3 py-2">Theme</th><th className="px-3 py-2">Metric</th><th className="px-3 py-2">Value</th></tr>
       </thead>
       <tbody>
@@ -196,9 +196,9 @@ export default function OutputReport() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">ESG Output Report</h1>
+      <h1 className="display text-[36px] text-neutral-900">ESG Output Report</h1>
 
-      <section className="rounded-lg bg-white p-4" aria-label="Search criteria">
+      <section className="card p-5" aria-label="Search criteria">
         <h2 className="mb-3 text-sm font-semibold">Search Criteria</h2>
         <form
           className="grid gap-3 md:grid-cols-[2fr_minmax(6rem,1fr)_3fr_auto]"
@@ -237,11 +237,11 @@ export default function OutputReport() {
         </form>
       </section>
 
-      {report.isError && <p role="alert" className="rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-800">{(report.error as Error).message}</p>}
+      {report.isError && <p role="alert" className="rounded bg-[#fbf0d3] px-3 py-2 text-sm text-[#7a5a0c]">{(report.error as Error).message}</p>}
 
       {report.data && (
         <>
-          <section className="space-y-3 rounded-lg bg-white p-4" aria-label="Portfolio company information">
+          <section className="space-y-3 card p-5" aria-label="Portfolio company information">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <h2 className="text-sm font-semibold">Portfolio Company Information</h2>
               <div className="flex gap-2">
@@ -252,7 +252,7 @@ export default function OutputReport() {
                 )}
                 <button
                   onClick={() => downloadFile(`/reports/request/${report.data.request.id}/pdf`, `esg-report-${report.data.request.label}.pdf`).catch((e) => setPdfError(e.message))}
-                  className="rounded-md bg-sky-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-600"
+                  className="rounded-lg border border-neutral-300 bg-card px-3.5 py-2 text-sm font-medium text-neutral-800 hover:bg-neutral-50"
                 >
                   Export to PDF
                 </button>
@@ -280,7 +280,7 @@ export default function OutputReport() {
               </div>
             )}
             {report.data.calculation.errorCount > 0 && (
-              <p role="alert" className="rounded bg-yellow-50 px-3 py-2 text-sm text-yellow-800">
+              <p role="alert" className="rounded bg-[#fbf0d3] px-3 py-2 text-sm text-[#7a5a0c]">
                 {report.data.calculation.errorCount} metric(s) could not be calculated, so totals may be incomplete:{' '}
                 {report.data.environmental.errors.map((e) => `${e.metric} (${e.error})`).join('; ')}
               </p>
@@ -288,7 +288,7 @@ export default function OutputReport() {
           </section>
 
           {consolidated && (
-            <section className="space-y-3 rounded-lg border-l-4 border-brand-500 bg-white p-4" aria-label="Consolidated report">
+            <section className="space-y-3 card border-l-4 !border-l-forest-500 p-5" aria-label="Consolidated report">
               <h2 className="text-sm font-semibold">Consolidated Report – {group.data?.company.name ?? ''} {year}</h2>
               {group.isLoading && <p className="text-sm text-neutral-500">Loading…</p>}
               {group.isError && <p role="alert" className="text-sm text-red-600">{(group.error as Error).message}</p>}
@@ -317,7 +317,7 @@ export default function OutputReport() {
                 label: 'History',
                 content: report.data.approvals.length ? (
                   <table className="w-full text-sm">
-                    <thead className="bg-neutral-600 text-left text-white">
+                    <thead className="bg-neutral-50 text-left text-[11px] uppercase tracking-[0.1em] text-neutral-500 [&_th]:py-3 [&_th]:font-semibold">
                       <tr><th className="px-3 py-2">Level</th><th className="px-3 py-2">Reviewer</th><th className="px-3 py-2">Status</th><th className="px-3 py-2">Date</th><th className="px-3 py-2">Remarks</th></tr>
                     </thead>
                     <tbody>
