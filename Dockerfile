@@ -17,12 +17,14 @@ ENV NODE_ENV=production \
     PORT=3000 \
     WEB_DIST=/app/web \
     UPLOAD_DIR=/data/uploads
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/apps/api ./apps/api
-COPY --from=build /app/apps/web/dist ./web
-COPY deploy/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh && mkdir -p /data/uploads && chown -R node:node /app /data
+# Files are owned by the unprivileged user as they are copied. A recursive chown afterwards would write a second
+# copy of node_modules into a new layer (slow build, much larger image).
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/package.json ./package.json
+COPY --from=build --chown=node:node /app/apps/api ./apps/api
+COPY --from=build --chown=node:node /app/apps/web/dist ./web
+COPY --chown=root:root --chmod=755 deploy/entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN mkdir -p /data/uploads && chown -R node:node /data
 USER node
 WORKDIR /app/apps/api
 EXPOSE 3000
