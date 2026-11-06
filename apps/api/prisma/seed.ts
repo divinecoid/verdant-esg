@@ -1,9 +1,11 @@
 import { PrismaClient, Role } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
+import { assertSeedCredentials } from '../src/common/env';
 
 const prisma = new PrismaClient();
 
 async function main() {
+  assertSeedCredentials(process.env);
   const email = process.env.SEED_ADMIN_EMAIL ?? 'admin@example.com';
   const password = process.env.SEED_ADMIN_PASSWORD ?? 'admin12345';
   await prisma.user.upsert({

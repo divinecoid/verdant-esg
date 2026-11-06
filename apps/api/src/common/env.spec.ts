@@ -1,4 +1,4 @@
-import { assertEnv } from './env';
+import { assertEnv, assertSeedCredentials } from './env';
 
 const ok = { DATABASE_URL: 'postgresql://x', JWT_SECRET: 'dev-secret' };
 
@@ -23,5 +23,24 @@ describe('assertEnv', () => {
       expect(() => assertEnv({ ...prod, JWT_SECRET: 'short' })).toThrow('at least 32 characters');
       expect(() => assertEnv({ ...prod, CORS_ORIGIN: undefined })).toThrow('CORS_ORIGIN must be set');
     });
+  });
+});
+
+describe('assertSeedCredentials', () => {
+  it('leaves local development alone', () => {
+    expect(() => assertSeedCredentials({})).not.toThrow();
+    expect(() => assertSeedCredentials({ NODE_ENV: 'development', SEED_ADMIN_PASSWORD: 'admin12345' })).not.toThrow();
+  });
+
+  it('refuses a missing, example or short admin password in production', () => {
+    const prod = { NODE_ENV: 'production' };
+    expect(() => assertSeedCredentials(prod)).toThrow('must be set');
+    expect(() => assertSeedCredentials({ ...prod, SEED_ADMIN_PASSWORD: 'admin12345' })).toThrow('example value');
+    expect(() => assertSeedCredentials({ ...prod, SEED_ADMIN_PASSWORD: 'CHANGE_ME' })).toThrow('example value');
+    expect(() => assertSeedCredentials({ ...prod, SEED_ADMIN_PASSWORD: 'short-pw' })).toThrow('at least 12');
+  });
+
+  it('accepts a strong password in production', () => {
+    expect(() => assertSeedCredentials({ NODE_ENV: 'production', SEED_ADMIN_PASSWORD: 'a-long-unique-passphrase' })).not.toThrow();
   });
 });

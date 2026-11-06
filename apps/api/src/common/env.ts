@@ -15,3 +15,15 @@ export function assertEnv(env: Record<string, string | undefined>) {
 
   if (problems.length) throw new Error(`Invalid configuration:\n - ${problems.join('\n - ')}`);
 }
+
+/**
+ * The first-admin seed falls back to a well-known password for local development. In production that fallback
+ * would be a publicly known login, so the seed must be given its own strong password or it refuses to run.
+ */
+export function assertSeedCredentials(env: Record<string, string | undefined>) {
+  if (env.NODE_ENV !== 'production') return;
+  const password = env.SEED_ADMIN_PASSWORD ?? '';
+  if (!password) throw new Error('SEED_ADMIN_PASSWORD must be set in production (the development default is public knowledge)');
+  if (password === 'admin12345' || password === 'CHANGE_ME') throw new Error('SEED_ADMIN_PASSWORD is still an example value');
+  if (password.length < 12) throw new Error('SEED_ADMIN_PASSWORD must be at least 12 characters in production');
+}
