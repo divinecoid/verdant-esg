@@ -1,0 +1,16 @@
+{
+  "name": "esg-monitoring",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev:api": "npm run start:dev -w @esg/api",
+    "dev:web": "npm run dev -w @esg/web",
+    "build": "npm run build -w @esg/api && npm run build -w @esg/web",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "db:up": "docker compose up -d db",
+    "db:migrate": "npm run prisma:migrate -w @esg/api",
+    "db:seed": "npm run prisma:seed -w @esg/api"
+  },
+  "engines": { "node": ">=20" }
+}

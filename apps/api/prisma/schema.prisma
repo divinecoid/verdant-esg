@@ -1,0 +1,393 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  ESG_TEAM
+  INVESTEE
+  VIEWER
+}
+
+enum CompanyType {
+  HOLDING
+  ASSET
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Company {
+  id               String             @id @default(cuid())
+  code             String             @unique
+  name             String
+  type             CompanyType
+  sector           String?
+  parentId         String?
+  parent           Company?           @relation("CompanyTree", fields: [parentId], references: [id])
+  children         Company[]          @relation("CompanyTree")
+  contacts         CompanyContact[]
+  projects         Project[]
+  users            User[]
+  metricMappings   MetricMapping[]
+  dataRequests     DataRequest[]
+  captureSchedules CaptureSchedule[]
+  minutes          MinutesOfMeeting[]
+  active           Boolean            @default(true)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model CompanyContact {
+  id        String  @id @default(cuid())
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  name      String
+  phone     String?
+  email     String?
+}
+
+model Project {
+  id                String    @id @default(cuid())
+  companyId         String
+  company           Company   @relation(fields: [companyId], references: [id])
+  name              String
+  sector            String?
+  ownershipPct      Decimal   @db.Decimal(5, 2)
+  investedCapital   Decimal   @db.Decimal(20, 2)
+  initialInvestedAt DateTime?
+  closingDate       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model AuditLog {
+  id        String         @id @default(cuid())
+  object    String
+  objectId  String?
+  action    AuditAction
+  userId    String?
+  userName  String?
+  changedAt DateTime       @default(now())
+  lines     AuditLogLine[]
+
+  @@index([object, changedAt])
+  @@index([userId])
+}
+
+model AuditLogLine {
+  id       String   @id @default(cuid())
+  logId    String
+  log      AuditLog @relation(fields: [logId], references: [id], onDelete: Cascade)
+  member   String
+  oldValue String?
+  newValue String?
+}
+
+enum EsgGroup {
+  ENVIRONMENTAL
+  SOCIAL
+  GOVERNANCE
+}
+
+model EsgTheme {
+  id           String              @id @default(cuid())
+  code         String              @unique
+  name         String
+  group        EsgGroup
+  active       Boolean             @default(true)
+  metrics      EsgMetric[]
+  mappingItems MetricMappingItem[]
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+}
+
+model EsgMetric {
+  id                     String                  @id @default(cuid())
+  code                   String                  @unique
+  name                   String
+  themeId                String
+  theme                  EsgTheme                @relation(fields: [themeId], references: [id])
+  scope                  String?
+  formulas               Formula[]
+  mappingItems           MetricMappingItem[]
+  unit                   String?
+  active                 Boolean                 @default(true)
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  dataRequestValues      DataRequestValue[]
+  calculationResultLines CalculationResultLine[]
+}
+
+model DataInputAttribute {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  unit        String?
+  dataType    String   @default("decimal")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model EmissionFactor {
+  id          String                @id @default(cuid())
+  code        String                @unique
+  name        String
+  description String?
+  values      EmissionFactorValue[]
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
+}
+
+model EmissionFactorValue {
+  id               String         @id @default(cuid())
+  emissionFactorId String
+  emissionFactor   EmissionFactor @relation(fields: [emissionFactorId], references: [id], onDelete: Cascade)
+  year             Int
+  value            Decimal        @db.Decimal(20, 6)
+
+  @@unique([emissionFactorId, year])
+}
+
+model BaseYearGhg {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  year      Int      @unique
+  value     Decimal  @db.Decimal(20, 4)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AppConfig {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Formula {
+  id         String    @id @default(cuid())
+  code       String    @unique
+  name       String
+  expression String
+  metricId   String
+  metric     EsgMetric @relation(fields: [metricId], references: [id])
+  active     Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+model MetricMapping {
+  id        String              @id @default(cuid())
+  companyId String
+  company   Company             @relation(fields: [companyId], references: [id])
+  version   Int
+  active    Boolean             @default(false)
+  items     MetricMappingItem[]
+  requests  DataRequest[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+
+  @@unique([companyId, version])
+}
+
+model MetricMappingItem {
+  id        String        @id @default(cuid())
+  mappingId String
+  mapping   MetricMapping @relation(fields: [mappingId], references: [id], onDelete: Cascade)
+  themeId   String
+  theme     EsgTheme      @relation(fields: [themeId], references: [id])
+  metricId  String
+  metric    EsgMetric     @relation(fields: [metricId], references: [id])
+
+  @@unique([mappingId, metricId])
+}
+
+enum RequestType {
+  PERIODIC
+  AD_HOC
+}
+
+enum Frequency {
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
+}
+
+enum RequestStatus {
+  NOT_STARTED
+  ON_GOING
+  SUBMITTED
+  NEED_REVISION
+  APPROVED
+}
+
+enum ReviewDecision {
+  APPROVED
+  NEED_REVISION
+}
+
+model DataRequest {
+  id              String                  @id @default(cuid())
+  number          Int                     @unique @default(autoincrement())
+  type            RequestType
+  frequency       Frequency?
+  companyId       String
+  company         Company                 @relation(fields: [companyId], references: [id])
+  mappingId       String
+  mapping         MetricMapping           @relation(fields: [mappingId], references: [id])
+  periodStart     DateTime                @db.Date
+  periodEnd       DateTime                @db.Date
+  dueDate         DateTime                @db.Date
+  notes           String?
+  remarks         String?
+  requestedById   String?
+  requestedByName String
+  status          RequestStatus           @default(NOT_STARTED)
+  /// 0 = not in review, 1 = waiting for first reviewer, 2 = waiting for second reviewer.
+  reviewLevel     Int                     @default(0)
+  submittedAt     DateTime?
+  submittedById   String?
+  lastReminderAt  DateTime?
+  values          DataRequestValue[]
+  attachments     DataRequestAttachment[]
+  approvals       ReviewApproval[]
+  calculations    CalculationRun[]
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  @@index([companyId, status])
+  @@index([status, reviewLevel])
+}
+
+model DataRequestValue {
+  id          String      @id @default(cuid())
+  requestId   String
+  request     DataRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  metricId    String
+  metric      EsgMetric   @relation(fields: [metricId], references: [id])
+  value       String?
+  dataStatus  String?
+  description String?
+  comment     String?
+
+  @@unique([requestId, metricId])
+}
+
+model DataRequestAttachment {
+  id           String      @id @default(cuid())
+  requestId    String
+  request      DataRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  fileName     String
+  mimeType     String
+  size         Int
+  storageKey   String      @unique
+  uploadedById String?
+  createdAt    DateTime    @default(now())
+}
+
+model ReviewApproval {
+  id           String         @id @default(cuid())
+  requestId    String
+  request      DataRequest    @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  level        Int
+  decision     ReviewDecision
+  remarks      String
+  reviewerId   String
+  reviewerName String
+  createdAt    DateTime       @default(now())
+}
+
+model CaptureSchedule {
+  id        String    @id @default(cuid())
+  companyId String
+  company   Company   @relation(fields: [companyId], references: [id])
+  frequency Frequency
+  /// Days after the period ends by which data must be submitted.
+  dueDays   Int       @default(60)
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@unique([companyId, frequency])
+}
+
+model CalculationRun {
+  id         String                  @id @default(cuid())
+  number     Int                     @unique @default(autoincrement())
+  requestId  String
+  request    DataRequest             @relation(fields: [requestId], references: [id])
+  runAt      DateTime                @default(now())
+  runById    String?
+  runByName  String
+  errorCount Int                     @default(0)
+  lines      CalculationResultLine[]
+
+  @@index([requestId, runAt])
+}
+
+/// One row per metric. Names, scope, unit, formula and every variable value are copied in at run time,
+/// so a result stays explainable after master data is edited.
+model CalculationResultLine {
+  id                String         @id @default(cuid())
+  runId             String
+  run               CalculationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  metricId          String
+  metric            EsgMetric      @relation(fields: [metricId], references: [id])
+  metricName        String
+  themeName         String
+  esgGroup          EsgGroup
+  scope             String?
+  unit              String?
+  inputValue        String?
+  formulaCode       String?
+  formulaExpression String?
+  emissionFactor    Decimal?       @db.Decimal(20, 6)
+  result            Decimal?       @db.Decimal(24, 6)
+  variables         Json?
+  error             String?
+}
+
+model MinutesOfMeeting {
+  id             String   @id @default(cuid())
+  companyId      String
+  company        Company  @relation(fields: [companyId], references: [id])
+  eventDate      DateTime @db.Date
+  notes          String
+  attachmentName String?
+  attachmentKey  String?
+  attachmentMime String?
+  attachmentSize Int?
+  createdById    String?
+  createdByName  String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([companyId, eventDate])
+}
